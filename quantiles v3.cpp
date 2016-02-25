@@ -1,8 +1,7 @@
 /*
 
-This version loads values by count directly into a vector
-using pushback. Then it sorts the entire vector with sort.
-It is unbearably slow.
+This version uses maps for value/amount pairs, so sorting is handled by the container.
+Unfortunately this actually ends up slower :(
 
 This program displays the quantile values for a collection
 of numbers. The input must be in the format:
@@ -39,6 +38,7 @@ For example above, output should be:
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <map>
 using namespace std;
 
 int main()
@@ -46,28 +46,38 @@ int main()
     int quantile {0},
         pairs {0},
         value {0},
-        count {0},
+        amount {0},
+        total {0},
         index {0};
 
     float indexCeil {0};
 
     cin >> quantile >> pairs;
 
-    vector<int> intVector;
+    map<int,int> pairMap;
 
     for (int i = 0; i < pairs; ++i)
     {
-        cin >> value >> count;
-        for (int i = 0; i < count; ++i)
-            intVector.push_back(value);
+        cin >> value >> amount;
+        pairMap[value] = amount;
+        total += amount;
     }
 
-    sort(intVector.begin(), intVector.end());
+    vector<int> intVector(total);
+
+    total = 0;
+
+    for (auto iter = pairMap.begin(); iter != pairMap.end(); ++iter)
+    {
+        for (int i = 0; i < iter->second; ++i)
+            intVector[i + total] = iter->first;
+        total += iter->second;
+    }
 
     for (int i = 1; i < quantile; ++i)
     {
-        index = (intVector.size() * i / quantile) - 1;
-        indexCeil = (ceil(float(intVector.size() * i) / (float)quantile)) - 1;
+        index = ((total * i) / quantile) - 1;
+        indexCeil = (ceil((float)(total * i) / (float)quantile)) - 1;
 
         (index == indexCeil) ?
         cout << ((intVector[index] + intVector[index + 1]) / 2)

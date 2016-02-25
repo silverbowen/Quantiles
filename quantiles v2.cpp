@@ -1,8 +1,8 @@
 /*
 
-This version loads values by count directly into a vector
-using pushback. Then it sorts the entire vector with sort.
-It is unbearably slow.
+This version uses parallel arrays for value/amount and sorts them
+using a bubble sort, then assigns the sorted "compressed" values
+to a "expanded" array.
 
 This program displays the quantile values for a collection
 of numbers. The input must be in the format:
@@ -45,29 +45,47 @@ int main()
 {
     int quantile {0},
         pairs {0},
-        value {0},
-        count {0},
+        total {0},
         index {0};
 
     float indexCeil {0};
 
     cin >> quantile >> pairs;
 
-    vector<int> intVector;
+    int valueArray[pairs],
+        amountArray[pairs];
 
     for (int i = 0; i < pairs; ++i)
     {
-        cin >> value >> count;
-        for (int i = 0; i < count; ++i)
-            intVector.push_back(value);
+        cin >> valueArray[i] >> amountArray[i];
+        total += amountArray[i];
     }
 
-    sort(intVector.begin(), intVector.end());
+    vector<int> intVector(total);
+
+    total = 0;
+
+    for (int i = 0; i < pairs; ++i)
+    {
+        if (amountArray[i] > amountArray[i + 1])
+        {
+            swap(amountArray[i], amountArray[i + 1]);
+            swap(valueArray[i], valueArray[i + 1]);
+            i = 0;
+        }
+    }
+
+    for (int i = 0; i < pairs; ++i)
+    {
+        for (int j = 0; j < amountArray[i]; ++j)
+            intVector[j + total] = valueArray[i];
+        total += amountArray[i];
+    }
 
     for (int i = 1; i < quantile; ++i)
     {
-        index = (intVector.size() * i / quantile) - 1;
-        indexCeil = (ceil(float(intVector.size() * i) / (float)quantile)) - 1;
+        index = ((total * i) / quantile) - 1;
+        indexCeil = (ceil((float)(total * i) / (float)quantile)) - 1;
 
         (index == indexCeil) ?
         cout << ((intVector[index] + intVector[index + 1]) / 2)
